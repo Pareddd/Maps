@@ -1,22 +1,23 @@
 package com.example.maps;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.maps.model.LocationModel;
 import java.util.List;
 
 public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHolder> {
-    private List<LocationModel> locations;
-    private Context context;
 
-    public LocationAdapter(List<LocationModel> locations, Context context) {
-        this.locations = locations;
+    private final List<LocationModel> locationList;
+    private final Context context;
+
+    public LocationAdapter(List<LocationModel> locationList, Context context) {
+        this.locationList = locationList;
         this.context = context;
     }
 
@@ -29,23 +30,28 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        LocationModel loc = locations.get(position);
-        holder.tvName.setText(loc.getName());
-        holder.tvAddress.setText(loc.getAddress());
+        LocationModel location = locationList.get(position);
 
+        holder.tvName.setText(location.getName());
+        holder.tvAddress.setText(location.getAddress());
+
+        // Aksi klik kita ubah menjadi memunculkan notifikasi Toast sederhana
+        // agar tidak error mencari DetailActivity.
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, DetailActivity.class);
-            intent.putExtra("NAME", loc.getName());
-            intent.putExtra("ADDRESS", loc.getAddress());
-            context.startActivity(intent);
+            Toast.makeText(context, "Membuka rute ke: " + location.getName(), Toast.LENGTH_SHORT).show();
+            // Nanti kita bisa mengatur agar klik ini memindahkan koordinat di MapFragment
         });
     }
 
     @Override
-    public int getItemCount() { return locations != null ? locations.size() : 0; }
+    public int getItemCount() {
+        if (locationList == null) return 0;
+        return locationList.size();
+    }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvAddress;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvName);
