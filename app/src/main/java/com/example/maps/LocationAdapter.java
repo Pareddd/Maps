@@ -1,12 +1,14 @@
 package com.example.maps;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.maps.model.LocationModel;
 import java.util.List;
@@ -32,14 +34,37 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LocationModel location = locationList.get(position);
 
-        holder.tvName.setText(location.getName());
-        holder.tvAddress.setText(location.getAddress());
+        String name = location.getName();
+        String address = location.getAddress();
 
-        // Aksi klik kita ubah menjadi memunculkan notifikasi Toast sederhana
-        // agar tidak error mencari DetailActivity.
+        if (name == null || name.trim().isEmpty()) {
+            name = "Agen Ekspedisi / Mitra Kurir";
+        }
+
+        if (address == null || address.trim().isEmpty()) {
+            address = "Melayani jasa pengiriman barang dan logistik area Makassar sekitarnya.";
+        } else {
+            String[] addressParts = address.split(",");
+            if (addressParts.length >= 2) {
+                address = addressParts[0].trim() + ", " + addressParts[1].trim();
+            }
+        }
+
+        holder.tvName.setText(name);
+        holder.tvAddress.setText(address);
+
+        final String finalName = name;
         holder.itemView.setOnClickListener(v -> {
-            Toast.makeText(context, "Membuka rute ke: " + location.getName(), Toast.LENGTH_SHORT).show();
-            // Nanti kita bisa mengatur agar klik ini memindahkan koordinat di MapFragment
+            Bundle bundle = new Bundle();
+            bundle.putDouble("lat", location.getLatitude());
+            bundle.putDouble("lng", location.getLongitude());
+            bundle.putString("name", finalName);
+
+            try {
+                Navigation.findNavController(v).navigate(R.id.mapFragment, bundle);
+            } catch (Exception e) {
+                Toast.makeText(context, "Navigasi ke peta belum siap", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

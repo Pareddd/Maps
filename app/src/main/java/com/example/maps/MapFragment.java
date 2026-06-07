@@ -11,6 +11,7 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 
 public class MapFragment extends Fragment {
     private MapView mapView;
@@ -24,11 +25,32 @@ public class MapFragment extends Fragment {
         mapView = view.findViewById(R.id.mapView);
 
         mapView.setTileSource(TileSourceFactory.MAPNIK);
-        mapView.setMultiTouchControls(true); // Agar peta bisa di-zoom menggunakan dua jari
+        mapView.setMultiTouchControls(true);
 
         GeoPoint makassarPoint = new GeoPoint(-5.147665, 119.432731);
         mapView.getController().setZoom(14.0);
         mapView.getController().setCenter(makassarPoint);
+
+        if (getArguments() != null) {
+            double lat = getArguments().getDouble("lat", 0.0);
+            double lng = getArguments().getDouble("lng", 0.0);
+            String name = getArguments().getString("name", "Lokasi Kurir");
+
+            if (lat != 0.0 && lng != 0.0) {
+                GeoPoint targetLocation = new GeoPoint(lat, lng);
+
+                mapView.getController().setCenter(targetLocation);
+                mapView.getController().setZoom(18.0);
+
+                Marker startMarker = new Marker(mapView);
+                startMarker.setPosition(targetLocation);
+                startMarker.setTitle(name);
+                startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+                mapView.getOverlays().add(startMarker);
+                mapView.invalidate();
+            }
+        }
 
         return view;
     }

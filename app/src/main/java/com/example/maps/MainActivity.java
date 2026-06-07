@@ -3,8 +3,8 @@ package com.example.maps;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -19,7 +19,31 @@ public class MainActivity extends AppCompatActivity {
 
         if (navHostFragment != null) {
             NavController navController = navHostFragment.getNavController();
-            NavigationUI.setupWithNavController(bottomNav, navController);
+
+            bottomNav.setOnItemSelectedListener(item -> {
+                int itemId = item.getItemId();
+
+                if (itemId == R.id.listFragment) {
+                    navController.popBackStack(R.id.listFragment, false);
+                    return true;
+                } else if (itemId == R.id.mapFragment) {
+                    NavOptions options = new NavOptions.Builder()
+                            .setLaunchSingleTop(true)
+                            .setPopUpTo(R.id.listFragment, false)
+                            .build();
+                    navController.navigate(R.id.mapFragment, null, options);
+                    return true;
+                }
+                return false;
+            });
+
+            navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+                if (destination.getId() == R.id.mapFragment) {
+                    bottomNav.getMenu().findItem(R.id.mapFragment).setChecked(true);
+                } else if (destination.getId() == R.id.listFragment) {
+                    bottomNav.getMenu().findItem(R.id.listFragment).setChecked(true);
+                }
+            });
         }
     }
 }
