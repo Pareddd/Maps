@@ -74,6 +74,15 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         return locationList.size();
     }
 
+    // =========================================================
+    // FITUR BARU: FUNGSI UNTUK MENGUBAH ISI DAFTAR SAAT DICARI
+    // =========================================================
+    public void setFilter(List<LocationModel> filterList) {
+        this.locationList.clear();
+        this.locationList.addAll(filterList);
+        notifyDataSetChanged(); // Perintahkan layar untuk memuat ulang daftar baru
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvAddress;
 

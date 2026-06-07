@@ -1,10 +1,13 @@
 package com.example.maps;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +27,10 @@ import retrofit2.Response;
 public class ListFragment extends Fragment {
     private RecyclerView recyclerView;
     private DatabaseHelper dbHelper;
+    private EditText etSearch;
+
+    private LocationAdapter adapter;
+    private List<LocationModel> masterDataList = new ArrayList<>(); // Menyimpan semua data asli
 
     @Nullable
     @Override
@@ -32,15 +39,56 @@ public class ListFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recyclerView);
         Button btnRefresh = view.findViewById(R.id.btnRefresh);
+        etSearch = view.findViewById(R.id.etSearch); // Hubungkan kotak pencarian
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         dbHelper = new DatabaseHelper(getContext());
 
         fetchEkspedisi();
 
-        btnRefresh.setOnClickListener(v -> fetchEkspedisi());
+        btnRefresh.setOnClickListener(v -> {
+            etSearch.setText(""); // Kosongkan pencarian saat refresh
+            fetchEkspedisi();
+        });
+
+        // =========================================================
+        // FITUR BARU: MENDETEKSI KETIKAN DI KOTAK PENCARIAN
+        // =========================================================
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Memanggil fungsi filter setiap kali huruf diketik
+                filterData(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
 
         return view;
+    }
+
+    // Fungsi pemilah data berdasarkan kata kunci
+    private void filterData(String keyword) {
+        List<LocationModel> filteredList = new ArrayList<>();
+
+        for (LocationModel loc : masterDataList) {
+            String name = loc.getName() != null ? loc.getName().toLowerCase() : "";
+            String address = loc.getAddress() != null ? loc.getAddress().toLowerCase() : "";
+
+            // Cek apakah kata kunci ada di nama agen ATAU di alamatnya
+            if (name.contains(keyword.toLowerCase()) || address.contains(keyword.toLowerCase())) {
+                filteredList.add(loc);
+            }
+        }
+
+        // Kirim data yang sudah disaring ke layar
+        if (adapter != null) {
+            adapter.setFilter(filteredList);
+        }
     }
 
     private List<LocationModel> getLocalCouriers() {
@@ -113,6 +161,14 @@ public class ListFragment extends Fragment {
     }
 
     private void updateUI(List<LocationModel> locations) {
-        recyclerView.setAdapter(new LocationAdapter(locations, getContext()));
+        // Simpan data ke master list agar pencarian tidak merusak data asli
+        masterDataList.clear();
+        masterDataList.addAll(locations);
+
+        // Buat salinan data untuk ditampilkan pertama kali
+        List<LocationModel> displayList = new ArrayList<>(masterDataList);
+
+        adapter = new LocationAdapter(displayList, getContext());
+        recyclerView.setAdapter(adapter);
     }
 }

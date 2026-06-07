@@ -4,60 +4,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F6F8">
+    android:background="#F5F5F5">
 
-    <!-- Header Ekspedisi -->
-    <LinearLayout
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#FFFFFF"
-        android:padding="20dp"
-        android:elevation="2dp">
+        android:layout_margin="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="📦 Radar Ekspedisi"
-            android:textColor="#2C3E50"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
-        <TextView
+        <EditText
+            android:id="@+id/etSearch"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Menampilkan titik lokasi agen ekspedisi dan jasa pengiriman terdekat di sekitarmu."
-            android:textColor="#7F8C8D"
-            android:textSize="14sp"/>
-    </LinearLayout>
+            android:layout_height="50dp"
+            android:background="@android:color/transparent"
+            android:drawableStart="@android:drawable/ic_menu_search"
+            android:drawablePadding="8dp"
+            android:hint="Cari agen (misal: JNE, SiCepat...)"
+            android:inputType="text"
+            android:maxLines="1"
+            android:padding="12dp"
+            android:textColor="#333333" />
+    </androidx.cardview.widget.CardView>
 
-    <!-- Deretan Tombol Navigasi (Hanya tersisa Segarkan Titik) -->
-    <LinearLayout
+    <Button
+        android:id="@+id/btnRefresh"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="8dp">
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="Refresh Data API" />
 
-        <Button
-            android:id="@+id/btnRefresh"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:backgroundTint="#3498DB"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:text="🔄 Segarkan Titik Lokasi"
-            app:cornerRadius="8dp"/>
-    </LinearLayout>
-
-    <!-- Daftar Lokasi -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp" />
+        android:paddingHorizontal="8dp"
+        android:clipToPadding="false" />
 
 </LinearLayout>
