@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "NavDB";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2; // Naikkan versi karena perubahan struktur tabel
 
     public final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -23,7 +23,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE locations (id INTEGER PRIMARY KEY, name TEXT, address TEXT, lat REAL, lng REAL)");
+        // Menggunakan AUTOINCREMENT agar ID dibuat otomatis oleh SQLite
+        db.execSQL("CREATE TABLE locations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, address TEXT, lat REAL, lng REAL)");
     }
 
     @Override
@@ -37,10 +38,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             SQLiteDatabase db = this.getWritableDatabase();
             db.beginTransaction();
             try {
-                db.execSQL("DELETE FROM locations");
+                db.execSQL("DELETE FROM locations"); // Hapus data lama sebelum simpan data baru
                 for (LocationModel loc : locations) {
                     ContentValues values = new ContentValues();
-                    values.put("id", loc.getId());
+                    // Kita tidak perlu memasukkan ID secara manual karena sudah AUTOINCREMENT
                     values.put("name", loc.getName());
                     values.put("address", loc.getAddress());
                     values.put("lat", loc.getLatitude());
@@ -48,7 +49,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     db.insert("locations", null, values);
                 }
                 db.setTransactionSuccessful();
-            } finally { db.endTransaction(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                db.endTransaction();
+            }
         });
     }
 
@@ -57,19 +62,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM locations", null);
 
-        if (cursor.getCount() == 0) {
-            list.add(new LocationModel(1, "Data Offline", "Nyalakan internet dulu", "0.0", "0.0"));
-            return list;
-        }
-
         if (cursor.moveToFirst()) {
             do {
                 list.add(new LocationModel(
-                        cursor.getInt(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        String.valueOf(cursor.getDouble(3)),
-                        String.valueOf(cursor.getDouble(4))
+                        cursor.getInt(0), // ID
+                        cursor.getString(1), // Name
+                        cursor.getString(2), // Address
+                        String.valueOf(cursor.getDouble(3)), // Lat
+                        String.valueOf(cursor.getDouble(4))  // Lng
                 ));
             } while (cursor.moveToNext());
         }
