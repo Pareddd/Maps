@@ -9,7 +9,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.maps.api.ApiClient;
@@ -31,35 +30,28 @@ public class ListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_list, container, false);
 
         recyclerView = view.findViewById(R.id.recyclerView);
-        Button btnRefresh = view.findViewById(R.id.btnRefresh);
-        Button btnToMap = view.findViewById(R.id.btnToMap);
+        Button btnRefresh = view.findViewById(R.id.btnRefresh); // Hanya tersisa tombol refresh
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         dbHelper = new DatabaseHelper(getContext());
 
-        fetchGadgetStores();
+        fetchEkspedisi();
 
-        btnRefresh.setOnClickListener(v -> fetchGadgetStores());
-        btnToMap.setOnClickListener(v -> {
-            try {
-                Navigation.findNavController(view).navigate(R.id.action_listFragment_to_mapFragment);
-            } catch (Exception e) {
-                Toast.makeText(getContext(), "Navigasi ke peta belum siap", Toast.LENGTH_SHORT).show();
-            }
-        });
+        btnRefresh.setOnClickListener(v -> fetchEkspedisi());
 
         return view;
     }
 
-    private void fetchGadgetStores() {
+    private void fetchEkspedisi() {
         ApiService apiService = ApiClient.getRetrofitInstance().create(ApiService.class);
-        apiService.getLocations("toko elektronik Makassar", "json").enqueue(new Callback<List<LocationModel>>() {
+
+        apiService.getLocations("jasa ekspedisi Makassar", "json").enqueue(new Callback<List<LocationModel>>() {
             @Override
             public void onResponse(@NonNull Call<List<LocationModel>> call, @NonNull Response<List<LocationModel>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     dbHelper.saveLocationsAsync(response.body());
                     updateUI(response.body());
-                    Toast.makeText(getContext(), "Data toko gadget berhasil dimuat!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Data agen ekspedisi berhasil dimuat!", Toast.LENGTH_SHORT).show();
                 }
             }
 
