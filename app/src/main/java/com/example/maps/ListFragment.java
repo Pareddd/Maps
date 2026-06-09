@@ -1,5 +1,7 @@
 package com.example.maps;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -11,6 +13,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +21,7 @@ import com.example.maps.api.ApiClient;
 import com.example.maps.api.ApiService;
 import com.example.maps.db.DatabaseHelper;
 import com.example.maps.model.LocationModel;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -41,8 +45,33 @@ public class ListFragment extends Fragment {
         Button btnRefresh = view.findViewById(R.id.btnRefresh);
         etSearch = view.findViewById(R.id.etSearch); // Hubungkan kotak pencarian
 
+        // =========================================================
+        // INISIALISASI SWITCH TEMA GELAP
+        // =========================================================
+        SwitchMaterial switchTheme = view.findViewById(R.id.switchTheme);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         dbHelper = new DatabaseHelper(getContext());
+
+        // Ambil status tema terakhir yang disimpan di SharedPreferences
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE);
+        boolean isDarkMode = sharedPreferences.getBoolean("IsDarkMode", false);
+
+        // Sesuaikan posisi switch dengan tema aktif
+        switchTheme.setChecked(isDarkMode);
+
+        // Aksi ketika pengguna menggeser Switch
+        switchTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean("IsDarkMode", isChecked);
+            editor.apply(); // Simpan preferensi secara lokal
+
+            if (isChecked) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+        });
 
         fetchEkspedisi();
 
@@ -52,7 +81,7 @@ public class ListFragment extends Fragment {
         });
 
         // =========================================================
-        // FITUR BARU: MENDETEKSI KETIKAN DI KOTAK PENCARIAN
+        // FITUR MENDETEKSI KETIKAN DI KOTAK PENCARIAN
         // =========================================================
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -146,12 +175,19 @@ public class ListFragment extends Fragment {
                 }
 
                 updateUI(combinedData);
-                Toast.makeText(getContext(), "Data agen ekspedisi berhasil dimuat!", Toast.LENGTH_SHORT).show();
+
+                // MENCEGAH CRASH: Pastikan Context tidak null sebelum memanggil Toast
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Data agen ekspedisi berhasil dimuat!", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onFailure(@NonNull Call<List<LocationModel>> call, @NonNull Throwable t) {
-                Toast.makeText(getContext(), "Koneksi gagal. Memuat data offline.", Toast.LENGTH_SHORT).show();
+                // MENCEGAH CRASH: Pastikan Context tidak null sebelum memanggil Toast
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Koneksi gagal. Memuat data offline.", Toast.LENGTH_SHORT).show();
+                }
 
                 List<LocationModel> fallbackData = getLocalCouriers();
                 fallbackData.addAll(dbHelper.getOfflineLocations());
