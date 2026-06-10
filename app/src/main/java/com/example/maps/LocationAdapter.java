@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -53,6 +54,23 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         holder.tvName.setText(name);
         holder.tvAddress.setText(address);
 
+        // =========================================================
+        // FITUR BARU: MENAMPILKAN LOGO ASLI BERDASARKAN NAMA AGEN
+        // =========================================================
+        String lowerName = name.toLowerCase();
+        if (lowerName.contains("j&t") || lowerName.contains("jnt")) {
+            holder.ivIcon.setImageResource(R.drawable.logo_jnt);
+        } else if (lowerName.contains("jne")) {
+            holder.ivIcon.setImageResource(R.drawable.logo_jne);
+        } else if (lowerName.contains("sicepat")) {
+            holder.ivIcon.setImageResource(R.drawable.logo_sicepat);
+        } else if (lowerName.contains("spx") || lowerName.contains("shopee")) {
+            holder.ivIcon.setImageResource(R.drawable.logo_spx);
+        } else {
+            // Jika ada ekspedisi lain yang tidak terdaftar, gunakan ikon default bawaan
+            holder.ivIcon.setImageResource(android.R.drawable.ic_menu_send);
+        }
+
         final String finalName = name;
         holder.itemView.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
@@ -85,11 +103,13 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvAddress;
+        ImageView ivIcon; // Daftarkan variabel ImageView baru
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvName);
             tvAddress = itemView.findViewById(R.id.tvAddress);
+            ivIcon = itemView.findViewById(R.id.ivIcon); // Hubungkan dengan ID di item_location.xml
         }
     }
 }
