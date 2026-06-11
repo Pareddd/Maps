@@ -8,11 +8,12 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,7 +22,7 @@ import com.example.maps.api.ApiClient;
 import com.example.maps.api.ApiService;
 import com.example.maps.db.DatabaseHelper;
 import com.example.maps.model.LocationModel;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -42,34 +43,50 @@ public class ListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_list, container, false);
 
         recyclerView = view.findViewById(R.id.recyclerView);
-        View btnRefresh = view.findViewById(R.id.btnRefresh);
+        ImageView btnRefresh = view.findViewById(R.id.btnRefresh);
         etSearch = view.findViewById(R.id.etSearch); // Hubungkan kotak pencarian
-
-        // =========================================================
-        // INISIALISASI SWITCH TEMA GELAP
-        // =========================================================
-        SwitchMaterial switchTheme = view.findViewById(R.id.switchTheme);
+        ImageView btnMenu = view.findViewById(R.id.btnMenu); // Hubungkan ikon menu garis tiga
+        MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroup); // Hubungkan Toggle Group
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         dbHelper = new DatabaseHelper(getContext());
 
         // Ambil status tema terakhir yang disimpan di SharedPreferences
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE);
-        boolean isDarkMode = sharedPreferences.getBoolean("IsDarkMode", false);
 
-        // Sesuaikan posisi switch dengan tema aktif
-        switchTheme.setChecked(isDarkMode);
+        // =========================================================
+        // PENGATURAN TEMA MENGGUNAKAN POP-UP DIALOG DARI MENU
+        // =========================================================
+        btnMenu.setOnClickListener(v -> {
+            // Cek ulang status tema saat ini sebelum menampilkan dialog
+            boolean currentMode = sharedPreferences.getBoolean("IsDarkMode", false);
+            String[] themes = {"Mode Terang", "Mode Gelap"};
+            int checkedItem = currentMode ? 1 : 0; // 0 untuk Terang, 1 untuk Gelap
 
-        // Aksi ketika pengguna menggeser Switch
-        switchTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean("IsDarkMode", isChecked);
-            editor.apply(); // Simpan preferensi secara lokal
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Pengaturan Tampilan")
+                    .setSingleChoiceItems(themes, checkedItem, (dialog, which) -> {
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        if (which == 1) { // Jika pilih Mode Gelap
+                            editor.putBoolean("IsDarkMode", true);
+                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                        } else { // Jika pilih Mode Terang
+                            editor.putBoolean("IsDarkMode", false);
+                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                        }
+                        editor.apply();
+                        dialog.dismiss(); // Tutup pop-up setelah memilih
+                    })
+                    .show();
+        });
 
+        // =========================================================
+        // LOGIKA TOGGLE BUTTON (TERDEKAT VS SEMUA)
+        // =========================================================
+        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                // Segarkan tampilan UI berdasarkan tombol yang sedang aktif
+                updateUI(new ArrayList<>(masterDataList));
             }
         });
 
@@ -210,13 +227,27 @@ public class ListFragment extends Fragment {
     }
 
     private void updateUI(List<LocationModel> locations) {
-        // Simpan data ke master list agar pencarian tidak merusak data asli
-        masterDataList.clear();
-        masterDataList.addAll(locations);
+        // Jika data baru masuk dari API, simpan ke master list
+        if (locations != masterDataList) {
+            masterDataList.clear();
+            masterDataList.addAll(locations);
+        }
 
-        // Buat salinan data untuk ditampilkan pertama kali
-        List<LocationModel> displayList = new ArrayList<>(masterDataList);
+        List<LocationModel> displayList = new ArrayList<>();
+        MaterialButtonToggleGroup toggleGroup = getView() != null ? getView().findViewById(R.id.toggleGroup) : null;
 
+        // Logika Pemilah Tombol Terdekat vs Lihat Semua
+        if (toggleGroup != null && toggleGroup.getCheckedButtonId() == R.id.btnNearby) {
+            // Simulasi Fitur Terdekat: Hanya ambil 5 agen teratas dari daftar
+            for (int i = 0; i < Math.min(5, masterDataList.size()); i++) {
+                displayList.add(masterDataList.get(i));
+            }
+        } else {
+            // Tampilkan seluruh data agen ekspedisi
+            displayList.addAll(masterDataList);
+        }
+
+        // Tembakkan data ke RecyclerView Adapter
         adapter = new LocationAdapter(displayList, getContext());
         recyclerView.setAdapter(adapter);
     }
