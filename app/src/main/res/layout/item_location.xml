@@ -19,7 +19,6 @@
         android:gravity="center_vertical"
         android:background="?android:attr/selectableItemBackground">
 
-        <!-- Ikon Ekspedisi -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardIconBg"
             android:layout_width="54dp"
@@ -38,7 +37,6 @@
                 android:src="@android:drawable/ic_menu_send" />
         </androidx.cardview.widget.CardView>
 
-        <!-- Informasi Titik Lokasi -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -46,7 +44,6 @@
             android:orientation="vertical"
             android:layout_marginStart="16dp">
 
-            <!-- Baris Nama dan Jarak -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -75,7 +72,6 @@
                     android:layout_marginStart="8dp"/>
             </LinearLayout>
 
-            <!-- Alamat -->
             <TextView
                 android:id="@+id/tvAddress"
                 android:layout_width="match_parent"
@@ -87,16 +83,80 @@
                 android:ellipsize="end"
                 android:textColor="@color/text_secondary" />
 
-            <!-- Status Jam Buka -->
-            <TextView
-                android:id="@+id/tvStatus"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="● BUKA"
-                android:textSize="11sp"
-                android:textStyle="bold"
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvRatingAngka"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="4.8"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFB300"/>
+
+                <RatingBar
+                    android:id="@+id/ratingBar"
+                    style="?android:attr/ratingBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:numStars="5"
+                    android:stepSize="0.1"
+                    android:rating="4.8"
+                    android:progressTint="#FFB300"/>
+
+                <TextView
+                    android:id="@+id/tvJumlahUlasan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="(0 ulasan)"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:textColor="@color/text_secondary"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvKomentar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Belum ada ulasan."
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_marginTop="8dp"
-                android:textColor="#0F9D58" />
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="● BUKA"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#0F9D58" />
+
+                <ImageView
+                    android:id="@+id/btnShare"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_share"
+                    app:tint="@color/text_secondary"
+                    android:background="?attr/selectableItemBackgroundBorderless"/>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
