@@ -20,7 +20,8 @@ public class MainActivity extends AppCompatActivity {
         if (isDarkMode) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         } else {
-            AppCompatDegitlegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            // Ejaan yang salah sudah diperbaiki di baris ini
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
 
         setContentView(R.layout.activity_main);
