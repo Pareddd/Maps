@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ID di sini HARUS sama persis dengan ID fragment di nav_graph.xml -->
+    <item
+        android:id="@+id/listFragment"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Daftar Agen" />
+
+    <item
+        android:id="@+id/mapFragment"
+        android:icon="@android:drawable/ic_dialog_map"
+        android:title="Peta" />
+</menu>

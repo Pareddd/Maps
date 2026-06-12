@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingVertical="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <RatingBar
+            android:id="@+id/lineRatingBar"
+            style="?android:attr/ratingBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:numStars="5"
+            android:progressTint="#FFB300"/>
+
+        <TextView
+            android:id="@+id/lineRatingAngka"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="#FFB300"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:text="5.0"/>
+    </LinearLayout>
+
+    <!-- INI BIANG KEROKNYA: Sekarang sudah pakai warna dinamis -->
+    <TextView
+        android:id="@+id/lineTeksKomentar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="14sp"/>
+
+    <!-- Garis pemisah antar komentar, pakai abu-abu transparan agar aman dari crash -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="#309E9E9E" />
+</LinearLayout>

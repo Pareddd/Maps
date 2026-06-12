@@ -1,24 +1,61 @@
 package com.example.maps;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
-
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
+import androidx.navigation.fragment.NavHostFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+
+        SharedPreferences sharedPreferences = getSharedPreferences("ThemePrefs", MODE_PRIVATE);
+        boolean isDarkMode = sharedPreferences.getBoolean("IsDarkMode", false);
+
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+
+        if (navHostFragment != null) {
+            NavController navController = navHostFragment.getNavController();
+
+            bottomNav.setOnItemSelectedListener(item -> {
+                int itemId = item.getItemId();
+
+                if (itemId == R.id.listFragment) {
+                    navController.popBackStack(R.id.listFragment, false);
+                    return true;
+                } else if (itemId == R.id.mapFragment) {
+                    NavOptions options = new NavOptions.Builder()
+                            .setLaunchSingleTop(true)
+                            .setPopUpTo(R.id.listFragment, false)
+                            .build();
+                    navController.navigate(R.id.mapFragment, null, options);
+                    return true;
+                }
+                return false;
+            });
+
+            navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+                if (destination.getId() == R.id.mapFragment) {
+                    bottomNav.getMenu().findItem(R.id.mapFragment).setChecked(true);
+                } else if (destination.getId() == R.id.listFragment) {
+                    bottomNav.getMenu().findItem(R.id.listFragment).setChecked(true);
+                }
+            });
+        }
     }
 }

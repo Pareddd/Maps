@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <!-- Logo Kompas Baru -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/logo_radar"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Judul Aplikasi -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Radar Ekspedisi"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <!-- Slogan Singkat -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Lacak Agen Terdekat Lebih Cepat"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Animasi Loading (Berputar) di Bawah Layar -->
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="50dp"
+        android:indeterminateTint="#1A237E" />
+
+</RelativeLayout>

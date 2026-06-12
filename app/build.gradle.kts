@@ -42,4 +42,6 @@ dependencies {
     implementation("androidx.navigation:navigation-ui:2.7.7")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("com.github.MKergall:osmbonuspack:6.9.0")
 }

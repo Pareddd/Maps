@@ -1,0 +1,269 @@
+package com.example.maps;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.maps.api.ApiClient;
+import com.example.maps.api.ApiService;
+import com.example.maps.db.DatabaseHelper;
+import com.example.maps.model.LocationModel;
+import com.google.android.material.button.MaterialButtonToggleGroup;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class ListFragment extends Fragment {
+    private RecyclerView recyclerView;
+    private DatabaseHelper dbHelper;
+    private EditText etSearch;
+
+    private LocationAdapter adapter;
+    private List<LocationModel> masterDataList = new ArrayList<>();
+    private final double CURRENT_LAT = -5.2000;
+    private final double CURRENT_LNG = 119.4450;
+
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_list, container, false);
+
+        TypedValue typedValue = new TypedValue();
+        requireContext().getTheme().resolveAttribute(android.R.attr.colorBackground, typedValue, true);
+        view.setBackgroundColor(typedValue.data);
+
+        if (getActivity() != null) {
+            Window window = getActivity().getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(android.graphics.Color.parseColor("#1A237E"));
+        }
+
+        recyclerView = view.findViewById(R.id.recyclerView);
+        ImageView btnRefresh = view.findViewById(R.id.btnRefresh);
+        etSearch = view.findViewById(R.id.etSearch);
+        ImageView btnMenu = view.findViewById(R.id.btnMenu);
+        MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroup);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        dbHelper = new DatabaseHelper(getContext());
+
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE);
+
+        btnMenu.setOnClickListener(v -> {
+            boolean currentMode = sharedPreferences.getBoolean("IsDarkMode", false);
+            String[] themes = {"Mode Terang", "Mode Gelap"};
+            int checkedItem = currentMode ? 1 : 0;
+
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Pengaturan Tampilan")
+                    .setSingleChoiceItems(themes, checkedItem, (dialog, which) -> {
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        if (which == 1) {
+                            editor.putBoolean("IsDarkMode", true);
+                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                        } else {
+                            editor.putBoolean("IsDarkMode", false);
+                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                        }
+                        editor.apply();
+                        dialog.dismiss();
+                    })
+                    .show();
+        });
+
+        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                updateUI(new ArrayList<>(masterDataList));
+            }
+        });
+
+        fetchEkspedisi();
+
+        btnRefresh.setOnClickListener(v -> {
+            v.animate().rotationBy(360f).setDuration(500).start();
+            etSearch.setText("");
+            fetchEkspedisi();
+        });
+
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterData(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        return view;
+    }
+
+    private void filterData(String keyword) {
+        List<LocationModel> filteredList = new ArrayList<>();
+
+        for (LocationModel loc : masterDataList) {
+            String name = loc.getName() != null ? loc.getName().toLowerCase() : "";
+            String address = loc.getAddress() != null ? loc.getAddress().toLowerCase() : "";
+
+            if (name.contains(keyword.toLowerCase()) || address.contains(keyword.toLowerCase())) {
+                filteredList.add(loc);
+            }
+        }
+
+        if (filteredList.isEmpty() && !keyword.isEmpty() && getContext() != null) {
+            Toast.makeText(getContext(), "Pencarian tidak ditemukan", Toast.LENGTH_SHORT).show();
+        }
+
+        if (adapter != null) {
+            adapter.setFilter(filteredList);
+        }
+    }
+
+    private List<LocationModel> getLocalCouriers() {
+        List<LocationModel> localData = new ArrayList<>();
+
+        localData.add(createLoc("JNE Agen Gowa", "Jl. Sultan Hasanuddin No.111, Pandang Pandang, Kec. Somba Opu, Kota Makassar, Sulawesi Selatan 90221", -5.195454876389358, 119.44539597832565));
+        localData.add(createLoc("J&T Express Sungguminasa", "Jl. Sultan Hasanuddin No.31, Pandang Pandang, Kec. Somba Opu, Kabupaten Gowa, Sulawesi Selatan 92111", -5.201523807788087, 119.4462544036001));
+        localData.add(createLoc("SPX Pallangga Hub", "Jl. Poros Pallangga No.38-47, Tetebatu, Kec. Pallangga, Kabupaten Gowa, Sulawesi Selatan 92161", -5.217768050211432, 119.44566237713194));
+        localData.add(createLoc("J&T Cargo Perintis", "Samping SPBU Perintis, Jl. Perintis Kemerdekaan No.km 10, Tamalanrea Jaya, Kec. Tamalanrea, Kota Makassar", -5.140435098549362, 119.48995327729112));
+        localData.add(createLoc("J&T Express MDP Kapasa Raya Permai", "Kapasa Raya Permai Blk. G No.01, Kelurahan Kapasa Raya, Kec. Tamalanrea, Kota Makassar", -5.100382695001246, 119.49687934841029));
+        localData.add(createLoc("J&T Express Telkomas", "Jl. Perintis Kemerdekaan No.4, Daya, Kec. Biringkanaya, Kota Makassar", -5.12178647661976, 119.50772741447769));
+        localData.add(createLoc("J&T Pajjaiang", "VGQ8+F3J, Jl. Pajjaiang, Paccerakkang, Kec. Biringkanaya, Kota Makassar", -5.10977061191489, 119.5152290724015));
+        localData.add(createLoc("J&T Express Paccerakkang", "Jl. Paccerakkang, RW.3, Paccerakkang, Kec. Biringkanaya, Kota Makassar", -5.115727310765139, 119.51898069938918));
+        localData.add(createLoc("J&T Express cabang btp", "Blk. AC Jl. Keindahan No.53, Paccerakkang, Kec. Biringkanaya, Kota Makassar", -5.1324880775788975, 119.51857658995205));
+        localData.add(createLoc("J&T & LION PARCEL ANTANG", "Jl. Dr. J Leimena No.113, Tello Baru, Kec. Panakkukang, Kota Makassar", -5.151974464103622, 119.47873700100037));
+        localData.add(createLoc("JNT UPG039A Antang", "RFRR+6VQ, Jl. Nipa-Nipa, Antang, Kec. Manggala, Kota Makassar", -5.15752701077795, 119.49232294922466));
+        localData.add(createLoc("J&T express upg 04A", "RFW5+HMF, Jl. Batua Raya No.51, Batua, Kec. Manggala, Kota Makassar", -5.150761913489756, 119.45927638024929));
+        localData.add(createLoc("JNT drop point masale", "RCWX+WCW, Jl. Abdullah Daeng Sirua, Pandang, Kec. Panakkukang, Kota Makassar", -5.150863502197091, 119.44832715174928));
+        localData.add(createLoc("J&T Express Pengayoman", "Komp. Akik Hijau, Jl. Pengayoman No.10 Blok E, Pandang, Kec. Panakkukang, Kota Makassar", -5.1586375386349586, 119.44934161836242));
+        localData.add(createLoc("J&T Express Toddopuli Raya", "Jl. Toddopuli Raya No.15, Pandang, Kec. Panakkukang, Kota Makassar", -5.163483746429437, 119.45066007062111));
+        localData.add(createLoc("J&T Express Pettarani", "RCWQ+R2H, Jl. A. P. Pettarani, Masale, Kec. Panakkukang, Kota Makassar", -5.150258092048712, 119.43869674168948));
+        localData.add(createLoc("J&T Express Drop Point VIP", "VC9F+78V, Jl. Lobak, Wajo Baru, Kec. Bontoala, Kota Makassar", -5.1305712162434745, 119.4225784114322));
+        localData.add(createLoc("JNE Tamalanrea", "Jl. Perintis Kemerdekaan No.Km.11 No.245, Tamalanrea, Kec. Tamalanrea, Kota Makassar", -5.131345121519572, 119.49748427464235));
+        localData.add(createLoc("JNE Agen Abdesir", "Bara-Baraya Timur, Jl. Abdullah Daeng Sirua No.440, Batua, Kec. Manggala, Kota Makassar", -5.147193365128173, 119.46771566693518));
+        localData.add(createLoc("JNE Bukit Baruga", "Jl. Raya Baruga No.Raya 61, Antang, Manggala, Kota Makassar", -5.1539658846231875, 119.4818308913793));
+        localData.add(createLoc("JNE Antang", "Jl. Antang Raya No.47, Antang, Kec. Manggala, Kota Makassar", -5.1574165179029965, 119.47669842207324));
+        localData.add(createLoc("JNE Hertasning", "Jalan Hertasning baru, Kassi-Kassi, Kec. Rappocini, Kota Makassar", -5.166233458999299, 119.44962830041801));
+        localData.add(createLoc("JNE Kantor Cabang Makassar", "Jl. Yusuf Daeng Ngawing No.6, Tidung, Kec. Rappocini, Kota Makassar", -5.1643168271838835, 119.44026049824535));
+        localData.add(createLoc("JNE Express", "RCMH+J42, Jl. Andi Djemma, Banta-Bantaeng, Kec. Rappocini, Kota Makassar", -5.16316700445746, 119.42819860547858));
+        localData.add(createLoc("JNE Daeng Tata", "Jl. Daeng Tata Raya No.10, Parang Tambung, Kec. Tamalate, Kota Makassar", -5.1801638152557405, 119.41934584836339));
+        localData.add(createLoc("JNE Urip Sumoharjo", "Jl. Urip Sumoharjo Jl. Maccini Raya No.73B, Malimongan Baru, Kec. Bontoala, Kota Makassar", -5.131219468672117, 119.42922355671814));
+        localData.add(createLoc("JNE Rappokalling", "Jl. Rappokalling Raya No.20b, Rappokalling, Kec. Tallo, Kota Makassar", -5.125979475638908, 119.43743515132157));
+        localData.add(createLoc("SiCepat Express Makassar", "Jl. Perintis Kemerdekaan Keluaran No.KM 14, Daya, Kec. Biringkanaya, Kota Makassar", -5.109437834502319, 119.51191226704387));
+        localData.add(createLoc("SPX Express Biringkanaya HUB", "Jl. Kima XVI, Daya, Kec. Biringkanaya, Kota Makassar", -5.095675104514196, 119.5014393346636));
+        localData.add(createLoc("SPX Express Bangkala", "Bangkala, Kec. Manggala, Kota Makassar", -5.172444148973032, 119.48084455304834));
+        localData.add(createLoc("SPX Express Makassar 2 HUB", "VC6H+V2M, Maccini Gusung, Kec. Makassar, Kota Makassar", -5.133291584895679, 119.4269394232379));
+        localData.add(createLoc("SPX Express Wajo HUB", "Jl. Tentara Pelajar Kel No.Blok 2A, RT.000/RW.000, Butung, Kec. Wajo, Kota Makassar", -5.118588813743252, 119.40942920028239));
+
+        return localData;
+    }
+
+    private LocationModel createLoc(String name, String address, double lat, double lng) {
+        LocationModel model = new LocationModel();
+        model.setName(name);
+        model.setAddress(address);
+
+        model.setLatitude(String.valueOf(lat));
+        model.setLongitude(String.valueOf(lng));
+        return model;
+    }
+
+    private void fetchEkspedisi() {
+        ApiService apiService = ApiClient.getRetrofitInstance().create(ApiService.class);
+
+        apiService.getLocations("jasa ekspedisi Makassar", "json").enqueue(new Callback<List<LocationModel>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<LocationModel>> call, @NonNull Response<List<LocationModel>> response) {
+                List<LocationModel> combinedData = getLocalCouriers();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    combinedData.addAll(response.body());
+                    dbHelper.saveLocationsAsync(response.body());
+                }
+
+                updateUI(combinedData);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<LocationModel>> call, @NonNull Throwable t) {
+                List<LocationModel> fallbackData = getLocalCouriers();
+                fallbackData.addAll(dbHelper.getOfflineLocations());
+                updateUI(fallbackData);
+            }
+        });
+    }
+
+    private void updateUI(List<LocationModel> locations) {
+        if (locations != masterDataList) {
+            masterDataList.clear();
+            masterDataList.addAll(locations);
+        }
+
+        Collections.sort(masterDataList, (loc1, loc2) -> {
+            try {
+                double d1 = calculateDistance(CURRENT_LAT, CURRENT_LNG, loc1.getLatitude(), loc1.getLongitude());
+                double d2 = calculateDistance(CURRENT_LAT, CURRENT_LNG, loc2.getLatitude(), loc2.getLongitude());
+                return Double.compare(d1, d2);
+            } catch (Exception e) {
+                return 0;
+            }
+        });
+
+        List<LocationModel> displayList = new ArrayList<>();
+        MaterialButtonToggleGroup toggleGroup = getView() != null ? getView().findViewById(R.id.toggleGroup) : null;
+
+        if (toggleGroup != null && toggleGroup.getCheckedButtonId() == R.id.btnNearby) {
+            for (int i = 0; i < Math.min(5, masterDataList.size()); i++) {
+                displayList.add(masterDataList.get(i));
+            }
+            // FILTER FAVORIT DI SINI
+        } else if (toggleGroup != null && toggleGroup.getCheckedButtonId() == R.id.btnFavorite) {
+            for (LocationModel loc : masterDataList) {
+                if (dbHelper.isFavorite(loc.getName() != null ? loc.getName() : "")) {
+                    displayList.add(loc);
+                }
+            }
+        } else {
+            displayList.addAll(masterDataList);
+        }
+
+        if (isAdded() && getContext() != null) {
+            adapter = new LocationAdapter(displayList, requireContext(), CURRENT_LAT, CURRENT_LNG);
+            recyclerView.setAdapter(adapter);
+        }
+    }
+}
