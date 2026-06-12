@@ -1,38 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#3498DB">
+    android:background="?android:attr/colorBackground">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:gravity="center"
+        android:orientation="vertical">
 
+        <!-- Logo Kompas Baru -->
         <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:src="@android:drawable/ic_dialog_map"
-            app:tint="#FFFFFF" />
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/logo_radar"
+            android:layout_marginBottom="20dp" />
 
+        <!-- Judul Aplikasi -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:text="Radar Ekspedisi"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
 
+        <!-- Slogan Singkat -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Makassar &amp; Sekitarnya"
-            android:textColor="#E0E0E0"
+            android:layout_marginTop="8dp"
+            android:text="Lacak Agen Terdekat Lebih Cepat"
+            android:textColor="?android:attr/textColorSecondary"
             android:textSize="14sp" />
     </LinearLayout>
+
+    <!-- Animasi Loading (Berputar) di Bawah Layar -->
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="50dp"
+        android:indeterminateTint="#1A237E" />
 
 </RelativeLayout>
