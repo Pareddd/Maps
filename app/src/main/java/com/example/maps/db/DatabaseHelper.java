@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "NavDB";
-    private static final int DATABASE_VERSION = 6; // Naik ke 6 agar otomatis reset database
+    private static final int DATABASE_VERSION = 7; // Naik ke 7 agar otomatis reset dan memasukkan ulasan Gowa
 
     public final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -243,6 +243,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             addReview("SPX Express Wajo HUB", 4.5f, "Hubungannya langsung ke pelabuhan, cepat.");
             addReview("SPX Express Wajo HUB", 4.0f, "Kurirnya gesit tawwa.");
+
+            // --- LOKASI BARU GOWA ---
+            addReview("JNE Agen Gowa", 5.0f, "Lokasinya gampang dicari, pas di pinggir jalan Sultan Hasanuddin.");
+            addReview("JNE Agen Gowa", 4.5f, "Pelayanan cepat, adminnya ramah banget.");
+
+            addReview("J&T Express Sungguminasa", 4.0f, "Sering ramai kalau sore, tapi paket selalu aman.");
+            addReview("J&T Express Sungguminasa", 5.0f, "Kurirnya langganan, mantap pokoknya daerah Gowa.");
+
+            addReview("SPX Pallangga Hub", 4.5f, "Gudang sortirnya lumayan besar, ambil paket sendiri gampang.");
+            addReview("SPX Pallangga Hub", 3.5f, "Parkirannya agak sempit kalau bawa mobil, selebihnya oke.");
         }
     }
 }
