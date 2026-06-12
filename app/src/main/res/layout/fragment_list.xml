@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA"
+    android:background="?android:attr/colorBackground"
     android:orientation="vertical">
 
     <com.google.android.material.switchmaterial.SwitchMaterial
@@ -26,7 +26,7 @@
             android:src="@android:drawable/ic_menu_sort_by_size"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            app:tint="#1A237E"
+            app:tint="?android:attr/textColorPrimary"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"/>
@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Radar Ekspedisi"
-            android:textColor="#1A237E"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_alignParentEnd="true"
@@ -47,10 +47,10 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="24dp"
-        app:cardBackgroundColor="@android:color/white"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
-        app:strokeColor="#E8EAED"
+        app:strokeColor="#509E9E9E"
         app:strokeWidth="1.5dp">
 
         <LinearLayout
@@ -64,7 +64,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@android:drawable/ic_menu_search"
-                app:tint="#9AA0A6"
+                app:tint="?android:attr/textColorSecondary"
                 android:layout_marginStart="12dp"/>
 
             <EditText
@@ -74,11 +74,11 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:hint="Lacak agen ekspedisi..."
-                android:textColorHint="#9AA0A6"
+                android:textColorHint="?android:attr/textColorSecondary"
                 android:inputType="text"
                 android:maxLines="1"
                 android:paddingHorizontal="12dp"
-                android:textColor="@color/text_primary"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textSize="14sp" />
 
             <androidx.cardview.widget.CardView
@@ -120,8 +120,8 @@
                 android:text="Terdekat"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:strokeColor="#1A237E"
-                android:textColor="#1A237E" />
+                app:strokeColor="?android:attr/textColorSecondary"
+                android:textColor="?android:attr/textColorPrimary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAll"
@@ -131,8 +131,8 @@
                 android:text="Semua"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:strokeColor="#1A237E"
-                android:textColor="#1A237E" />
+                app:strokeColor="?android:attr/textColorSecondary"
+                android:textColor="?android:attr/textColorPrimary" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -143,7 +143,7 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:src="@android:drawable/ic_popup_sync"
-            app:tint="#5F6368"
+            app:tint="?android:attr/textColorSecondary"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"/>

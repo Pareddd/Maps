@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="10dp"
-    android:background="?android:attr/selectableItemBackground">
+    android:paddingVertical="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -24,25 +23,26 @@
             android:id="@+id/lineRatingAngka"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="5.0"
-            android:textSize="12sp"
-            android:textStyle="bold"
+            android:layout_marginStart="8dp"
             android:textColor="#FFB300"
-            android:layout_marginStart="8dp"/>
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:text="5.0"/>
     </LinearLayout>
 
+    <!-- INI BIANG KEROKNYA: Sekarang sudah pakai warna dinamis -->
     <TextView
         android:id="@+id/lineTeksKomentar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Isi komentar user..."
-        android:textColor="#212121"
-        android:textSize="14sp"
-        android:layout_marginTop="4dp"/>
+        android:layout_marginTop="4dp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="14sp"/>
 
+    <!-- Garis pemisah antar komentar, pakai abu-abu transparan agar aman dari crash -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="0.5dp"
-        android:background="#E0E0E0"
-        android:layout_marginTop="10dp"/>
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="#309E9E9E" />
 </LinearLayout>

@@ -22,6 +22,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.maps.db.DatabaseHelper;
 import com.example.maps.model.LocationModel;
+
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
@@ -46,7 +47,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         return new ViewHolder(view);
     }
 
-    // Fungsi kecil untuk menentukan logo agar tidak mengulang kode
     private int getLogoResource(String name) {
         String lowerName = name.toLowerCase();
         if (lowerName.contains("j&t") || lowerName.contains("jnt")) {
@@ -54,10 +54,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         } else if (lowerName.contains("jne")) {
             return R.drawable.logo_jne;
         } else if (lowerName.contains("sicepat")) {
-            // PASTIKAN kamu punya gambar logo_sicepat di folder drawable
             return R.drawable.logo_sicepat;
         } else if (lowerName.contains("spx") || lowerName.contains("shopee")) {
-            // PASTIKAN kamu punya gambar logo_spx di folder drawable
             return R.drawable.logo_spx;
         } else {
             return android.R.drawable.ic_menu_send;
@@ -79,7 +77,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         holder.tvJumlahUlasan.setText("(" + reviewData.totalReviews + " ulasan)");
         holder.tvKomentar.setText(reviewData.latestComment);
 
-        // Pasang Logo di Daftar Kartu
         holder.ivIcon.setImageResource(getLogoResource(name));
 
         holder.btnCekOngkir.setOnClickListener(v -> showCekOngkirDialog(name));
@@ -123,16 +120,15 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     }
 
     private void showReviewPageDialog(LocationModel location, String name, String address, int position, View rootView) {
-        final android.app.Dialog dialog = new android.app.Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen);
+        // MENGGUNAKAN TEMA BAWAAN APLIKASI (R.style.Theme_Maps) AGAR DARK MODE BERFUNGSI!
+        final android.app.Dialog dialog = new android.app.Dialog(context, R.style.Theme_Maps);
         dialog.setContentView(R.layout.dialog_review_detail);
 
-        // ==========================================================
-        // MENGHILANGKAN WARNA UNGU DI STATUS BAR PALING ATAS
-        // ==========================================================
         Window window = dialog.getWindow();
         if (window != null) {
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.setStatusBarColor(android.graphics.Color.parseColor("#1A237E")); // Menyesuaikan warna Header Biru Gelap
+            window.setStatusBarColor(android.graphics.Color.parseColor("#1A237E"));
         }
 
         TextView tvTitle = dialog.findViewById(R.id.tvDetailTitle);
@@ -142,8 +138,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
         tvTitle.setText(name);
         tvAddress.setText(address);
-
-        // PASANG LOGO DI HEADER DIALOG
         ivDetailLogo.setImageResource(getLogoResource(name));
 
         Runnable loadReviewsRunnable = new Runnable() {
@@ -243,7 +237,9 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         final TextView tvHasil = new TextView(context);
         tvHasil.setTextSize(15f);
         tvHasil.setPadding(0, 40, 0, 0);
-        tvHasil.setTextColor(android.graphics.Color.DKGRAY);
+
+        // SAYA HAPUS KODE WARNA DKGRAY DI SINI AGAR TEKSNYA BISA JADI PUTIH SAAT DARK MODE
+
         layout.addView(tvHasil);
 
         builder.setView(layout);

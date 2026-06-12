@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"> <!-- Warna Otomatis Gelap/Terang -->
+    android:background="?android:attr/colorBackground">
 
-    <!-- HEADER BIRU GELAP (Tetap biru karena ini identitas aplikasi) -->
+    <!-- HEADER BIRU GELAP -->
     <LinearLayout
         android:id="@+id/headerLayout"
         android:layout_width="match_parent"
@@ -74,10 +74,11 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- KOTAK ALAMAT -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardBackgroundColor="?android:attr/colorBackground"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
 
@@ -87,12 +88,13 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
+                    <!-- WARNA TEKS ALAMAT AGEN DIUBAH KE DINAMIS -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Alamat Agen:"
                         android:textStyle="bold"
-                        android:textColor="#1A237E"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="14sp"/>
 
                     <TextView
@@ -101,7 +103,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="Detail alamat..."
-                        android:textColor="?android:attr/textColorPrimary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="14sp"
                         android:lineSpacingExtra="4dp"/>
                 </LinearLayout>
@@ -126,6 +128,7 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- BOTTOM BAR -->
     <LinearLayout
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"

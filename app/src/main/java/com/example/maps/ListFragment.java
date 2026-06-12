@@ -5,9 +5,12 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -42,6 +45,19 @@ public class ListFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list, container, false);
 
+        // ==========================================================
+        // PAKSA BACKGROUND DAN STATUS BAR MENGAKUI DARK MODE
+        // ==========================================================
+        TypedValue typedValue = new TypedValue();
+        requireContext().getTheme().resolveAttribute(android.R.attr.colorBackground, typedValue, true);
+        view.setBackgroundColor(typedValue.data);
+
+        if (getActivity() != null) {
+            Window window = getActivity().getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(android.graphics.Color.parseColor("#1A237E")); // Paksa ungu hilang jadi biru
+        }
+
         recyclerView = view.findViewById(R.id.recyclerView);
         ImageView btnRefresh = view.findViewById(R.id.btnRefresh);
         etSearch = view.findViewById(R.id.etSearch);
@@ -53,7 +69,6 @@ public class ListFragment extends Fragment {
 
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE);
 
-        // Pengaturan Tema
         btnMenu.setOnClickListener(v -> {
             boolean currentMode = sharedPreferences.getBoolean("IsDarkMode", false);
             String[] themes = {"Mode Terang", "Mode Gelap"};
@@ -84,9 +99,8 @@ public class ListFragment extends Fragment {
 
         fetchEkspedisi();
 
-        // FITUR BARU: Animasi Refresh Melintir
         btnRefresh.setOnClickListener(v -> {
-            v.animate().rotationBy(360f).setDuration(500).start(); // Animasi berputar
+            v.animate().rotationBy(360f).setDuration(500).start();
             etSearch.setText("");
             fetchEkspedisi();
         });
@@ -119,7 +133,6 @@ public class ListFragment extends Fragment {
             }
         }
 
-        // FITUR BARU: Validasi jika hasil pencarian kosong
         if (filteredList.isEmpty() && !keyword.isEmpty() && getContext() != null) {
             Toast.makeText(getContext(), "Pencarian tidak ditemukan", Toast.LENGTH_SHORT).show();
         }
@@ -132,7 +145,6 @@ public class ListFragment extends Fragment {
     private List<LocationModel> getLocalCouriers() {
         List<LocationModel> localData = new ArrayList<>();
 
-        // --- KELOMPOK J&T EXPRESS ---
         localData.add(createLoc("J&T Cargo Perintis", "Samping SPBU Perintis, Jl. Perintis Kemerdekaan No.km 10, Tamalanrea Jaya, Kec. Tamalanrea, Kota Makassar", "-5.140435098549362", "119.48995327729112"));
         localData.add(createLoc("J&T Express MDP Kapasa Raya Permai", "Kapasa Raya Permai Blk. G No.01, Kelurahan Kapasa Raya, Kec. Tamalanrea, Kota Makassar", "-5.100382695001246", "119.49687934841029"));
         localData.add(createLoc("J&T Express Telkomas", "Jl. Perintis Kemerdekaan No.4, Daya, Kec. Biringkanaya, Kota Makassar", "-5.12178647661976", "119.50772741447769"));
@@ -148,7 +160,6 @@ public class ListFragment extends Fragment {
         localData.add(createLoc("J&T Express Pettarani", "RCWQ+R2H, Jl. A. P. Pettarani, Masale, Kec. Panakkukang, Kota Makassar", "-5.150258092048712", "119.43869674168948"));
         localData.add(createLoc("J&T Express Drop Point VIP", "VC9F+78V, Jl. Lobak, Wajo Baru, Kec. Bontoala, Kota Makassar", "-5.1305712162434745", "119.4225784114322"));
 
-        // --- KELOMPOK JNE EXPRESS ---
         localData.add(createLoc("JNE Tamalanrea", "Jl. Perintis Kemerdekaan No.Km.11 No.245, Tamalanrea, Kec. Tamalanrea, Kota Makassar", "-5.131345121519572", "119.49748427464235"));
         localData.add(createLoc("JNE Agen Abdesir", "Bara-Baraya Timur, Jl. Abdullah Daeng Sirua No.440, Batua, Kec. Manggala, Kota Makassar", "-5.147193365128173", "119.46771566693518"));
         localData.add(createLoc("JNE Bukit Baruga", "Jl. Raya Baruga No.Raya 61, Antang, Manggala, Kota Makassar", "-5.1539658846231875", "119.4818308913793"));
@@ -160,7 +171,6 @@ public class ListFragment extends Fragment {
         localData.add(createLoc("JNE Urip Sumoharjo", "Jl. Urip Sumoharjo Jl. Maccini Raya No.73B, Malimongan Baru, Kec. Bontoala, Kota Makassar", "-5.131219468672117", "119.42922355671814"));
         localData.add(createLoc("JNE Rappokalling", "Jl. Rappokalling Raya No.20b, Rappokalling, Kec. Tallo, Kota Makassar", "-5.125979475638908", "119.43743515132157"));
 
-        // --- KELOMPOK SICEPAT & SPX EXPRESS ---
         localData.add(createLoc("SiCepat Express Makassar", "Jl. Perintis Kemerdekaan Keluaran No.KM 14, Daya, Kec. Biringkanaya, Kota Makassar", "-5.109437834502319", "119.51191226704387"));
         localData.add(createLoc("SPX Express Biringkanaya HUB", "Jl. Kima XVI, Daya, Kec. Biringkanaya, Kota Makassar", "-5.095675104514196", "119.5014393346636"));
         localData.add(createLoc("SPX Express Bangkala", "Bangkala, Kec. Manggala, Kota Makassar", "-5.172444148973032", "119.48084455304834"));
@@ -193,18 +203,10 @@ public class ListFragment extends Fragment {
                 }
 
                 updateUI(combinedData);
-
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Data agen ekspedisi berhasil dimuat!", Toast.LENGTH_SHORT).show();
-                }
             }
 
             @Override
             public void onFailure(@NonNull Call<List<LocationModel>> call, @NonNull Throwable t) {
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Koneksi gagal. Memuat data offline.", Toast.LENGTH_SHORT).show();
-                }
-
                 List<LocationModel> fallbackData = getLocalCouriers();
                 fallbackData.addAll(dbHelper.getOfflineLocations());
                 updateUI(fallbackData);
