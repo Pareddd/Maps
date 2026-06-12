@@ -32,10 +32,14 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     private final List<LocationModel> locationList;
     private final Context context;
     private final DatabaseHelper dbHelper;
+    private final double currentLat;
+    private final double currentLng;
 
-    public LocationAdapter(List<LocationModel> locationList, Context context) {
+    public LocationAdapter(List<LocationModel> locationList, Context context, double currentLat, double currentLng) {
         this.locationList = locationList;
         this.context = context;
+        this.currentLat = currentLat;
+        this.currentLng = currentLng;
         this.dbHelper = new DatabaseHelper(context);
         this.dbHelper.insertDummyReviewsIfEmpty();
     }
@@ -62,6 +66,17 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         }
     }
 
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LocationModel location = locationList.get(position);
@@ -70,6 +85,21 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
         holder.tvName.setText(name);
         holder.tvAddress.setText(address);
+
+        try {
+            // Karena koordinat sudah bertipe double, kita langsung panggil method-nya
+            double locLat = location.getLatitude();
+            double locLng = location.getLongitude();
+            double distance = calculateDistance(currentLat, currentLng, locLat, locLng);
+
+            if (holder.tvDistance != null) {
+                holder.tvDistance.setText(String.format(Locale.getDefault(), "%.1f km", distance));
+            }
+        } catch (Exception e) {
+            if (holder.tvDistance != null) {
+                holder.tvDistance.setText("- km");
+            }
+        }
 
         DatabaseHelper.ReviewData reviewData = dbHelper.getReviewStats(name);
         holder.tvRatingAngka.setText(String.format(Locale.getDefault(), "%.1f", reviewData.averageRating));
@@ -99,7 +129,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvAddress, tvRatingAngka, tvJumlahUlasan, tvKomentar;
+        TextView tvName, tvAddress, tvDistance, tvRatingAngka, tvJumlahUlasan, tvKomentar;
         ImageView ivIcon;
         Button btnCekOngkir;
         CardView cardIconBg;
@@ -109,6 +139,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
             super(itemView);
             tvName = itemView.findViewById(R.id.tvName);
             tvAddress = itemView.findViewById(R.id.tvAddress);
+            tvDistance = itemView.findViewById(R.id.tvDistance);
             tvRatingAngka = itemView.findViewById(R.id.tvRatingAngka);
             ratingBar = itemView.findViewById(R.id.ratingBar);
             tvJumlahUlasan = itemView.findViewById(R.id.tvJumlahUlasan);
@@ -120,7 +151,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     }
 
     private void showReviewPageDialog(LocationModel location, String name, String address, int position, View rootView) {
-        // MENGGUNAKAN TEMA BAWAAN APLIKASI (R.style.Theme_Maps) AGAR DARK MODE BERFUNGSI!
         final android.app.Dialog dialog = new android.app.Dialog(context, R.style.Theme_Maps);
         dialog.setContentView(R.layout.dialog_review_detail);
 
@@ -237,9 +267,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         final TextView tvHasil = new TextView(context);
         tvHasil.setTextSize(15f);
         tvHasil.setPadding(0, 40, 0, 0);
-
-        // SAYA HAPUS KODE WARNA DKGRAY DI SINI AGAR TEKSNYA BISA JADI PUTIH SAAT DARK MODE
-
         layout.addView(tvHasil);
 
         builder.setView(layout);
