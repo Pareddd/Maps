@@ -35,7 +35,7 @@ public class ListFragment extends Fragment {
     private EditText etSearch;
 
     private LocationAdapter adapter;
-    private List<LocationModel> masterDataList = new ArrayList<>(); // Menyimpan semua data asli
+    private List<LocationModel> masterDataList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -44,69 +44,59 @@ public class ListFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recyclerView);
         ImageView btnRefresh = view.findViewById(R.id.btnRefresh);
-        etSearch = view.findViewById(R.id.etSearch); // Hubungkan kotak pencarian
-        ImageView btnMenu = view.findViewById(R.id.btnMenu); // Hubungkan ikon menu garis tiga
-        MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroup); // Hubungkan Toggle Group
+        etSearch = view.findViewById(R.id.etSearch);
+        ImageView btnMenu = view.findViewById(R.id.btnMenu);
+        MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroup);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         dbHelper = new DatabaseHelper(getContext());
 
-        // Ambil status tema terakhir yang disimpan di SharedPreferences
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("ThemePrefs", Context.MODE_PRIVATE);
 
-        // =========================================================
-        // PENGATURAN TEMA MENGGUNAKAN POP-UP DIALOG DARI MENU
-        // =========================================================
+        // Pengaturan Tema
         btnMenu.setOnClickListener(v -> {
-            // Cek ulang status tema saat ini sebelum menampilkan dialog
             boolean currentMode = sharedPreferences.getBoolean("IsDarkMode", false);
             String[] themes = {"Mode Terang", "Mode Gelap"};
-            int checkedItem = currentMode ? 1 : 0; // 0 untuk Terang, 1 untuk Gelap
+            int checkedItem = currentMode ? 1 : 0;
 
             new AlertDialog.Builder(requireContext())
                     .setTitle("Pengaturan Tampilan")
                     .setSingleChoiceItems(themes, checkedItem, (dialog, which) -> {
                         SharedPreferences.Editor editor = sharedPreferences.edit();
-                        if (which == 1) { // Jika pilih Mode Gelap
+                        if (which == 1) {
                             editor.putBoolean("IsDarkMode", true);
                             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                        } else { // Jika pilih Mode Terang
+                        } else {
                             editor.putBoolean("IsDarkMode", false);
                             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                         }
                         editor.apply();
-                        dialog.dismiss(); // Tutup pop-up setelah memilih
+                        dialog.dismiss();
                     })
                     .show();
         });
 
-        // =========================================================
-        // LOGIKA TOGGLE BUTTON (TERDEKAT VS SEMUA)
-        // =========================================================
         toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (isChecked) {
-                // Segarkan tampilan UI berdasarkan tombol yang sedang aktif
                 updateUI(new ArrayList<>(masterDataList));
             }
         });
 
         fetchEkspedisi();
 
+        // FITUR BARU: Animasi Refresh Melintir
         btnRefresh.setOnClickListener(v -> {
-            etSearch.setText(""); // Kosongkan pencarian saat refresh
+            v.animate().rotationBy(360f).setDuration(500).start(); // Animasi berputar
+            etSearch.setText("");
             fetchEkspedisi();
         });
 
-        // =========================================================
-        // FITUR MENDETEKSI KETIKAN DI KOTAK PENCARIAN
-        // =========================================================
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Memanggil fungsi filter setiap kali huruf diketik
                 filterData(s.toString());
             }
 
@@ -117,7 +107,6 @@ public class ListFragment extends Fragment {
         return view;
     }
 
-    // Fungsi pemilah data berdasarkan kata kunci
     private void filterData(String keyword) {
         List<LocationModel> filteredList = new ArrayList<>();
 
@@ -125,21 +114,21 @@ public class ListFragment extends Fragment {
             String name = loc.getName() != null ? loc.getName().toLowerCase() : "";
             String address = loc.getAddress() != null ? loc.getAddress().toLowerCase() : "";
 
-            // Cek apakah kata kunci ada di nama agen ATAU di alamatnya
             if (name.contains(keyword.toLowerCase()) || address.contains(keyword.toLowerCase())) {
                 filteredList.add(loc);
             }
         }
 
-        // Kirim data yang sudah disaring ke layar
+        // FITUR BARU: Validasi jika hasil pencarian kosong
+        if (filteredList.isEmpty() && !keyword.isEmpty() && getContext() != null) {
+            Toast.makeText(getContext(), "Pencarian tidak ditemukan", Toast.LENGTH_SHORT).show();
+        }
+
         if (adapter != null) {
             adapter.setFilter(filteredList);
         }
     }
 
-    // =========================================================
-    // DATA ALAMAT KONKRIT (LOKAL & FALLBACK DATA)
-    // =========================================================
     private List<LocationModel> getLocalCouriers() {
         List<LocationModel> localData = new ArrayList<>();
 
@@ -181,7 +170,6 @@ public class ListFragment extends Fragment {
         return localData;
     }
 
-    // Fungsi Pembantu Otomatisasi Instansiasi Objek Lokasi
     private LocationModel createLoc(String name, String address, String lat, String lng) {
         LocationModel model = new LocationModel();
         model.setName(name);
@@ -206,7 +194,6 @@ public class ListFragment extends Fragment {
 
                 updateUI(combinedData);
 
-                // MENCEGAH CRASH: Pastikan Context tidak null sebelum memanggil Toast
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Data agen ekspedisi berhasil dimuat!", Toast.LENGTH_SHORT).show();
                 }
@@ -214,7 +201,6 @@ public class ListFragment extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<List<LocationModel>> call, @NonNull Throwable t) {
-                // MENCEGAH CRASH: Pastikan Context tidak null sebelum memanggil Toast
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Koneksi gagal. Memuat data offline.", Toast.LENGTH_SHORT).show();
                 }
@@ -227,7 +213,6 @@ public class ListFragment extends Fragment {
     }
 
     private void updateUI(List<LocationModel> locations) {
-        // Jika data baru masuk dari API, simpan ke master list
         if (locations != masterDataList) {
             masterDataList.clear();
             masterDataList.addAll(locations);
@@ -236,22 +221,15 @@ public class ListFragment extends Fragment {
         List<LocationModel> displayList = new ArrayList<>();
         MaterialButtonToggleGroup toggleGroup = getView() != null ? getView().findViewById(R.id.toggleGroup) : null;
 
-        // Logika Pemilah Tombol Terdekat vs Lihat Semua
         if (toggleGroup != null && toggleGroup.getCheckedButtonId() == R.id.btnNearby) {
-            // Simulasi Fitur Terdekat: Hanya ambil 5 agen teratas dari daftar
             for (int i = 0; i < Math.min(5, masterDataList.size()); i++) {
                 displayList.add(masterDataList.get(i));
             }
         } else {
-            // Tampilkan seluruh data agen ekspedisi
             displayList.addAll(masterDataList);
         }
 
-        // =========================================================
-        // PENGAMANAN CONTEXT AGAR TIDAK FORCE CLOSE (NPE)
-        // =========================================================
         if (isAdded() && getContext() != null) {
-            // Tembakkan data ke RecyclerView Adapter
             adapter = new LocationAdapter(displayList, requireContext());
             recyclerView.setAdapter(adapter);
         }

@@ -6,6 +6,8 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -20,6 +22,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.maps.db.DatabaseHelper;
 import com.example.maps.model.LocationModel;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
@@ -43,6 +46,24 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         return new ViewHolder(view);
     }
 
+    // Fungsi kecil untuk menentukan logo agar tidak mengulang kode
+    private int getLogoResource(String name) {
+        String lowerName = name.toLowerCase();
+        if (lowerName.contains("j&t") || lowerName.contains("jnt")) {
+            return R.drawable.logo_jnt;
+        } else if (lowerName.contains("jne")) {
+            return R.drawable.logo_jne;
+        } else if (lowerName.contains("sicepat")) {
+            // PASTIKAN kamu punya gambar logo_sicepat di folder drawable
+            return R.drawable.logo_sicepat;
+        } else if (lowerName.contains("spx") || lowerName.contains("shopee")) {
+            // PASTIKAN kamu punya gambar logo_spx di folder drawable
+            return R.drawable.logo_spx;
+        } else {
+            return android.R.drawable.ic_menu_send;
+        }
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LocationModel location = locationList.get(position);
@@ -58,24 +79,11 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         holder.tvJumlahUlasan.setText("(" + reviewData.totalReviews + " ulasan)");
         holder.tvKomentar.setText(reviewData.latestComment);
 
-        String lowerName = name.toLowerCase();
-        if (lowerName.contains("j&t") || lowerName.contains("jnt")) {
-            holder.ivIcon.setImageResource(R.drawable.logo_jnt);
-        } else if (lowerName.contains("jne")) {
-            holder.ivIcon.setImageResource(R.drawable.logo_jne);
-        } else {
-            holder.ivIcon.setImageResource(android.R.drawable.ic_menu_send);
-        }
+        // Pasang Logo di Daftar Kartu
+        holder.ivIcon.setImageResource(getLogoResource(name));
 
-        // =========================================================
-        // KLIK TOMBOL HIJAU "CEK ONGKIR"
-        // =========================================================
         holder.btnCekOngkir.setOnClickListener(v -> showCekOngkirDialog(name));
-
-        // Klik sembarang tempat di kartu untuk melihat detail ulasan & rute
         holder.itemView.setOnClickListener(v -> showReviewPageDialog(location, name, address, position, v));
-
-        // Tekan tahan kartunya untuk menambah ulasan baru
         holder.itemView.setOnLongClickListener(v -> {
             showAddReviewDialog(name, position);
             return true;
@@ -96,7 +104,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvAddress, tvRatingAngka, tvJumlahUlasan, tvKomentar;
         ImageView ivIcon;
-        Button btnCekOngkir; // <--- Sekarang pakai Button, bukan ImageView lagi
+        Button btnCekOngkir;
         CardView cardIconBg;
         RatingBar ratingBar;
 
@@ -118,12 +126,25 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         final android.app.Dialog dialog = new android.app.Dialog(context, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen);
         dialog.setContentView(R.layout.dialog_review_detail);
 
+        // ==========================================================
+        // MENGHILANGKAN WARNA UNGU DI STATUS BAR PALING ATAS
+        // ==========================================================
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(android.graphics.Color.parseColor("#1A237E")); // Menyesuaikan warna Header Biru Gelap
+        }
+
         TextView tvTitle = dialog.findViewById(R.id.tvDetailTitle);
         TextView tvAddress = dialog.findViewById(R.id.tvDetailAddress);
+        ImageView ivDetailLogo = dialog.findViewById(R.id.ivDetailLogo);
         LinearLayout containerKomentar = dialog.findViewById(R.id.containerKomentar);
 
         tvTitle.setText(name);
         tvAddress.setText(address);
+
+        // PASANG LOGO DI HEADER DIALOG
+        ivDetailLogo.setImageResource(getLogoResource(name));
 
         Runnable loadReviewsRunnable = new Runnable() {
             @Override
@@ -167,34 +188,51 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     private void showAddReviewDialog(String locationName, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Tambah Ulasan");
+
         final RatingBar rb = new RatingBar(context);
         rb.setNumStars(5);
+        rb.setStepSize(0.5f);
+        rb.setRating(5.0f);
+
         final EditText et = new EditText(context);
-        et.setHint("Tulis komentarmu...");
+        et.setHint("Tulis pengalamanmu di sini...");
+
         LinearLayout ll = new LinearLayout(context);
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setPadding(50, 20, 50, 20);
         ll.addView(rb); ll.addView(et);
         builder.setView(ll);
-        builder.setPositiveButton("Kirim", (d, w) -> {
-            dbHelper.addReview(locationName, rb.getRating(), et.getText().toString());
-            notifyItemChanged(position);
-            Toast.makeText(context, "Ulasan berhasil ditambahkan!", Toast.LENGTH_SHORT).show();
+
+        builder.setPositiveButton("Kirim", null);
+        builder.setNegativeButton("Batal", (d, w) -> d.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String komentar = et.getText().toString().trim();
+            if (komentar.isEmpty()) {
+                et.setError("Komentar tidak boleh kosong!");
+            } else {
+                dbHelper.addReview(locationName, rb.getRating(), komentar);
+                notifyItemChanged(position);
+                Toast.makeText(context, "Terima kasih atas ulasanmu!", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
         });
-        builder.show();
     }
 
     private void showCekOngkirDialog(String agenName) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Estimasi Ongkir");
-        builder.setMessage("Agen: " + agenName);
+        builder.setTitle("Estimasi Tarif Pengiriman");
+        builder.setMessage("Agen: " + agenName + "\nAsal: Makassar");
 
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(60, 20, 60, 20);
 
         final EditText etTujuan = new EditText(context);
-        etTujuan.setHint("Kota Tujuan (Misal: Jakarta)");
+        etTujuan.setHint("Kota Tujuan (Misal: Aceh, Palu)");
         layout.addView(etTujuan);
 
         final EditText etBerat = new EditText(context);
@@ -203,9 +241,9 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         layout.addView(etBerat);
 
         final TextView tvHasil = new TextView(context);
-        tvHasil.setTextSize(16f);
+        tvHasil.setTextSize(15f);
         tvHasil.setPadding(0, 40, 0, 0);
-        tvHasil.setTextColor(android.graphics.Color.BLACK);
+        tvHasil.setTextColor(android.graphics.Color.DKGRAY);
         layout.addView(tvHasil);
 
         builder.setView(layout);
@@ -217,7 +255,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         dialog.show();
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String tujuan = etTujuan.getText().toString().trim();
+            String tujuan = etTujuan.getText().toString().trim().toLowerCase();
             String beratStr = etBerat.getText().toString().trim();
 
             if (tujuan.isEmpty() || beratStr.isEmpty()) {
@@ -227,26 +265,55 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
             try {
                 float berat = Float.parseFloat(beratStr);
-                int hargaPerKg = 15000;
+                int hargaDasarAgen = 18000;
 
                 String lowerName = agenName.toLowerCase();
                 if (lowerName.contains("jne")) {
-                    hargaPerKg = 18000;
+                    hargaDasarAgen = 20000;
                 } else if (lowerName.contains("j&t") || lowerName.contains("jnt")) {
-                    hargaPerKg = 17000;
+                    hargaDasarAgen = 19000;
                 } else if (lowerName.contains("sicepat")) {
-                    hargaPerKg = 16000;
+                    hargaDasarAgen = 18000;
                 } else if (lowerName.contains("spx") || lowerName.contains("shopee")) {
-                    hargaPerKg = 14000;
+                    hargaDasarAgen = 16000;
                 }
 
+                double multiplierZona = 1.2;
+                String namaZona = "Regional Sulawesi";
+
+                if (tujuan.contains("makassar") || tujuan.contains("gowa") || tujuan.contains("maros")) {
+                    hargaDasarAgen = 10000;
+                    multiplierZona = 1.0;
+                    namaZona = "Lokal (Sulsel)";
+                } else if (tujuan.contains("jakarta") || tujuan.contains("jawa") || tujuan.contains("bandung") || tujuan.contains("surabaya") || tujuan.contains("jogja")) {
+                    multiplierZona = 2.0;
+                    namaZona = "Pulau Jawa";
+                } else if (tujuan.contains("sumatera") || tujuan.contains("medan") || tujuan.contains("aceh") || tujuan.contains("padang") || tujuan.contains("palembang") || tujuan.contains("riau")) {
+                    multiplierZona = 3.5;
+                    namaZona = "Pulau Sumatera";
+                } else if (tujuan.contains("papua") || tujuan.contains("maluku") || tujuan.contains("jayapura") || tujuan.contains("ambon")) {
+                    multiplierZona = 5.0;
+                    namaZona = "Indonesia Timur";
+                } else if (tujuan.contains("kalimantan") || tujuan.contains("balikpapan") || tujuan.contains("samarinda") || tujuan.contains("banjarmasin") || tujuan.contains("pontianak")) {
+                    multiplierZona = 2.5;
+                    namaZona = "Pulau Kalimantan";
+                } else if (tujuan.contains("palu") || tujuan.contains("kendari") || tujuan.contains("manado") || tujuan.contains("gorontalo")) {
+                    multiplierZona = 1.5;
+                    namaZona = "Sulawesi (Antar Provinsi)";
+                }
+
+                int hargaPerKg = (int) (hargaDasarAgen * multiplierZona);
                 int totalOngkir = (int) (berat * hargaPerKg);
 
-                String hasil = "📍 Tujuan: " + tujuan + "\n" +
+                NumberFormat formatRupiah = NumberFormat.getNumberInstance(new Locale("id", "ID"));
+                String strHargaKg = formatRupiah.format(hargaPerKg);
+                String strTotal = formatRupiah.format(totalOngkir);
+
+                String hasil = "📍 Tujuan: " + tujuan.toUpperCase() + " (" + namaZona + ")\n" +
                         "📦 Berat: " + berat + " Kg\n" +
-                        "💸 Tarif /Kg: Rp " + hargaPerKg + "\n" +
+                        "💸 Tarif /Kg: Rp " + strHargaKg + "\n" +
                         "----------------------------------------\n" +
-                        "🔥 Total Estimasi: Rp " + totalOngkir;
+                        "🔥 Total Estimasi: Rp " + strTotal;
 
                 tvHasil.setText(hasil);
 
