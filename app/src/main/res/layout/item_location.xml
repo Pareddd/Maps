@@ -149,13 +149,17 @@
                     android:textStyle="bold"
                     android:textColor="#0F9D58" />
 
-                <ImageView
-                    android:id="@+id/btnShare"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@android:drawable/ic_menu_share"
-                    app:tint="@color/text_secondary"
-                    android:background="?attr/selectableItemBackgroundBorderless"/>
+                <Button
+                    android:id="@+id/btnCekOngkir"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="Cek Ongkir"
+                    android:textSize="11sp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="8dp"
+                    android:backgroundTint="#4CAF50"
+                    android:textColor="#FFFFFF" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

@@ -247,8 +247,13 @@ public class ListFragment extends Fragment {
             displayList.addAll(masterDataList);
         }
 
-        // Tembakkan data ke RecyclerView Adapter
-        adapter = new LocationAdapter(displayList, getContext());
-        recyclerView.setAdapter(adapter);
+        // =========================================================
+        // PENGAMANAN CONTEXT AGAR TIDAK FORCE CLOSE (NPE)
+        // =========================================================
+        if (isAdded() && getContext() != null) {
+            // Tembakkan data ke RecyclerView Adapter
+            adapter = new LocationAdapter(displayList, requireContext());
+            recyclerView.setAdapter(adapter);
+        }
     }
 }

@@ -2,9 +2,11 @@ package com.example.maps;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -65,7 +67,15 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
             holder.ivIcon.setImageResource(android.R.drawable.ic_menu_send);
         }
 
+        // =========================================================
+        // KLIK TOMBOL HIJAU "CEK ONGKIR"
+        // =========================================================
+        holder.btnCekOngkir.setOnClickListener(v -> showCekOngkirDialog(name));
+
+        // Klik sembarang tempat di kartu untuk melihat detail ulasan & rute
         holder.itemView.setOnClickListener(v -> showReviewPageDialog(location, name, address, position, v));
+
+        // Tekan tahan kartunya untuk menambah ulasan baru
         holder.itemView.setOnLongClickListener(v -> {
             showAddReviewDialog(name, position);
             return true;
@@ -77,7 +87,6 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         return locationList != null ? locationList.size() : 0;
     }
 
-    // FUNGSI PENTING YANG TADI HILANG
     public void setFilter(List<LocationModel> filterList) {
         this.locationList.clear();
         this.locationList.addAll(filterList);
@@ -86,7 +95,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvAddress, tvRatingAngka, tvJumlahUlasan, tvKomentar;
-        ImageView ivIcon, btnShare;
+        ImageView ivIcon;
+        Button btnCekOngkir; // <--- Sekarang pakai Button, bukan ImageView lagi
         CardView cardIconBg;
         RatingBar ratingBar;
 
@@ -100,7 +110,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
             tvKomentar = itemView.findViewById(R.id.tvKomentar);
             ivIcon = itemView.findViewById(R.id.ivIcon);
             cardIconBg = itemView.findViewById(R.id.cardIconBg);
-            btnShare = itemView.findViewById(R.id.btnShare);
+            btnCekOngkir = itemView.findViewById(R.id.btnCekOngkir);
         }
     }
 
@@ -123,8 +133,15 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
                 LayoutInflater inflater = LayoutInflater.from(context);
                 for (DatabaseHelper.ReviewItem item : reviewList) {
                     View lineView = inflater.inflate(R.layout.item_review_line, containerKomentar, false);
+
                     ((RatingBar) lineView.findViewById(R.id.lineRatingBar)).setRating(item.rating);
                     ((TextView) lineView.findViewById(R.id.lineTeksKomentar)).setText(item.comment);
+
+                    TextView tvAngka = lineView.findViewById(R.id.lineRatingAngka);
+                    if (tvAngka != null) {
+                        tvAngka.setText(String.valueOf(item.rating));
+                    }
+
                     containerKomentar.addView(lineView);
                 }
             }
@@ -153,6 +170,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         final RatingBar rb = new RatingBar(context);
         rb.setNumStars(5);
         final EditText et = new EditText(context);
+        et.setHint("Tulis komentarmu...");
         LinearLayout ll = new LinearLayout(context);
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setPadding(50, 20, 50, 20);
@@ -161,8 +179,80 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         builder.setPositiveButton("Kirim", (d, w) -> {
             dbHelper.addReview(locationName, rb.getRating(), et.getText().toString());
             notifyItemChanged(position);
-            Toast.makeText(context, "Berhasil!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Ulasan berhasil ditambahkan!", Toast.LENGTH_SHORT).show();
         });
         builder.show();
+    }
+
+    private void showCekOngkirDialog(String agenName) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Estimasi Ongkir");
+        builder.setMessage("Agen: " + agenName);
+
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(60, 20, 60, 20);
+
+        final EditText etTujuan = new EditText(context);
+        etTujuan.setHint("Kota Tujuan (Misal: Jakarta)");
+        layout.addView(etTujuan);
+
+        final EditText etBerat = new EditText(context);
+        etBerat.setHint("Berat Paket (Kg)");
+        etBerat.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        layout.addView(etBerat);
+
+        final TextView tvHasil = new TextView(context);
+        tvHasil.setTextSize(16f);
+        tvHasil.setPadding(0, 40, 0, 0);
+        tvHasil.setTextColor(android.graphics.Color.BLACK);
+        layout.addView(tvHasil);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Hitung Tarif", null);
+        builder.setNegativeButton("Tutup", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String tujuan = etTujuan.getText().toString().trim();
+            String beratStr = etBerat.getText().toString().trim();
+
+            if (tujuan.isEmpty() || beratStr.isEmpty()) {
+                Toast.makeText(context, "Harap isi Kota Tujuan dan Berat Paket!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            try {
+                float berat = Float.parseFloat(beratStr);
+                int hargaPerKg = 15000;
+
+                String lowerName = agenName.toLowerCase();
+                if (lowerName.contains("jne")) {
+                    hargaPerKg = 18000;
+                } else if (lowerName.contains("j&t") || lowerName.contains("jnt")) {
+                    hargaPerKg = 17000;
+                } else if (lowerName.contains("sicepat")) {
+                    hargaPerKg = 16000;
+                } else if (lowerName.contains("spx") || lowerName.contains("shopee")) {
+                    hargaPerKg = 14000;
+                }
+
+                int totalOngkir = (int) (berat * hargaPerKg);
+
+                String hasil = "📍 Tujuan: " + tujuan + "\n" +
+                        "📦 Berat: " + berat + " Kg\n" +
+                        "💸 Tarif /Kg: Rp " + hargaPerKg + "\n" +
+                        "----------------------------------------\n" +
+                        "🔥 Total Estimasi: Rp " + totalOngkir;
+
+                tvHasil.setText(hasil);
+
+            } catch (NumberFormatException e) {
+                Toast.makeText(context, "Format berat tidak valid!", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
