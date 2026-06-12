@@ -8,11 +8,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -83,11 +85,11 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         String name = location.getName() != null ? location.getName() : "Agen Ekspedisi";
         String address = location.getAddress() != null ? location.getAddress() : "Melayani area sekitar.";
 
-        holder.tvName.setText(name);
+        boolean isFav = dbHelper.isFavorite(name);
+        holder.tvName.setText(isFav ? name + " ❤️" : name);
         holder.tvAddress.setText(address);
 
         try {
-            // Karena koordinat sudah bertipe double, kita langsung panggil method-nya
             double locLat = location.getLatitude();
             double locLng = location.getLongitude();
             double distance = calculateDistance(currentLat, currentLng, locLat, locLng);
@@ -111,8 +113,21 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
         holder.btnCekOngkir.setOnClickListener(v -> showCekOngkirDialog(name));
         holder.itemView.setOnClickListener(v -> showReviewPageDialog(location, name, address, position, v));
+
         holder.itemView.setOnLongClickListener(v -> {
-            showAddReviewDialog(name, position);
+            String[] options = {"📝 Tambah Ulasan", isFav ? "💔 Hapus dari Favorit" : "❤️ Tambah ke Favorit"};
+            new AlertDialog.Builder(context)
+                    .setTitle("Opsi: " + name)
+                    .setItems(options, (dialog, which) -> {
+                        if (which == 0) {
+                            showAddReviewDialog(name, position);
+                        } else {
+                            dbHelper.toggleFavorite(name);
+                            Toast.makeText(context, isFav ? "Dihapus dari Favorit" : "Ditambahkan ke Favorit!", Toast.LENGTH_SHORT).show();
+                            notifyDataSetChanged();
+                        }
+                    })
+                    .show();
             return true;
         });
     }
@@ -255,15 +270,28 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(60, 20, 60, 20);
 
+        // 1. Input Kota Tujuan
         final EditText etTujuan = new EditText(context);
-        etTujuan.setHint("Kota Tujuan (Misal: Aceh, Palu)");
+        etTujuan.setHint("Kota Tujuan (Misal: Bekasi, Palu)");
         layout.addView(etTujuan);
 
+        // 2. Dropdown Tipe Barang
+        final Spinner spTipe = new Spinner(context);
+        String[] tipeBarang = {"Pakaian", "Elektronik", "Dokumen", "Makanan", "Kosmetik", "Lainnya"};
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, tipeBarang);
+        spTipe.setAdapter(spinnerAdapter);
+        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        spinnerParams.setMargins(0, 30, 0, 30); // Memberi jarak atas bawah
+        spTipe.setLayoutParams(spinnerParams);
+        layout.addView(spTipe);
+
+        // 3. Input Berat Paket
         final EditText etBerat = new EditText(context);
         etBerat.setHint("Berat Paket (Kg)");
         etBerat.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         layout.addView(etBerat);
 
+        // 4. Output Hasil
         final TextView tvHasil = new TextView(context);
         tvHasil.setTextSize(15f);
         tvHasil.setPadding(0, 40, 0, 0);
@@ -280,6 +308,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String tujuan = etTujuan.getText().toString().trim().toLowerCase();
             String beratStr = etBerat.getText().toString().trim();
+            String tipeTerpilih = spTipe.getSelectedItem().toString();
 
             if (tujuan.isEmpty() || beratStr.isEmpty()) {
                 Toast.makeText(context, "Harap isi Kota Tujuan dan Berat Paket!", Toast.LENGTH_SHORT).show();
@@ -301,28 +330,37 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
                     hargaDasarAgen = 16000;
                 }
 
-                double multiplierZona = 1.2;
-                String namaZona = "Regional Sulawesi";
+                // Default jika tidak terdeteksi di kamus manapun
+                double multiplierZona = 2.0;
+                String namaZona = "Nasional / Lainnya";
 
-                if (tujuan.contains("makassar") || tujuan.contains("gowa") || tujuan.contains("maros")) {
+                if (tujuan.contains("makassar") || tujuan.contains("gowa") || tujuan.contains("maros") || tujuan.contains("takalar")) {
                     hargaDasarAgen = 10000;
                     multiplierZona = 1.0;
                     namaZona = "Lokal (Sulsel)";
-                } else if (tujuan.contains("jakarta") || tujuan.contains("jawa") || tujuan.contains("bandung") || tujuan.contains("surabaya") || tujuan.contains("jogja")) {
+                } else if (tujuan.contains("jakarta") || tujuan.contains("jawa") || tujuan.contains("bandung") || tujuan.contains("surabaya") || tujuan.contains("jogja") || tujuan.contains("bekasi") || tujuan.contains("bogor") || tujuan.contains("depok") || tujuan.contains("tangerang") || tujuan.contains("semarang") || tujuan.contains("malang")) {
                     multiplierZona = 2.0;
                     namaZona = "Pulau Jawa";
-                } else if (tujuan.contains("sumatera") || tujuan.contains("medan") || tujuan.contains("aceh") || tujuan.contains("padang") || tujuan.contains("palembang") || tujuan.contains("riau")) {
+                } else if (tujuan.contains("sumatera") || tujuan.contains("medan") || tujuan.contains("aceh") || tujuan.contains("padang") || tujuan.contains("palembang") || tujuan.contains("riau") || tujuan.contains("lampung") || tujuan.contains("batam")) {
                     multiplierZona = 3.5;
                     namaZona = "Pulau Sumatera";
-                } else if (tujuan.contains("papua") || tujuan.contains("maluku") || tujuan.contains("jayapura") || tujuan.contains("ambon")) {
+                } else if (tujuan.contains("papua") || tujuan.contains("maluku") || tujuan.contains("jayapura") || tujuan.contains("ambon") || tujuan.contains("sorong") || tujuan.contains("merauke")) {
                     multiplierZona = 5.0;
                     namaZona = "Indonesia Timur";
-                } else if (tujuan.contains("kalimantan") || tujuan.contains("balikpapan") || tujuan.contains("samarinda") || tujuan.contains("banjarmasin") || tujuan.contains("pontianak")) {
+                } else if (tujuan.contains("kalimantan") || tujuan.contains("balikpapan") || tujuan.contains("samarinda") || tujuan.contains("banjarmasin") || tujuan.contains("pontianak") || tujuan.contains("palangkaraya")) {
                     multiplierZona = 2.5;
                     namaZona = "Pulau Kalimantan";
-                } else if (tujuan.contains("palu") || tujuan.contains("kendari") || tujuan.contains("manado") || tujuan.contains("gorontalo")) {
+                } else if (tujuan.contains("bali") || tujuan.contains("denpasar") || tujuan.contains("lombok") || tujuan.contains("mataram") || tujuan.contains("kupang")) {
+                    multiplierZona = 2.5;
+                    namaZona = "Bali & Nusa Tenggara";
+                } else if (tujuan.contains("sulawesi") || tujuan.contains("palu") || tujuan.contains("kendari") || tujuan.contains("manado") || tujuan.contains("gorontalo") || tujuan.contains("bone") || tujuan.contains("palopo") || tujuan.contains("parepare")) {
                     multiplierZona = 1.5;
-                    namaZona = "Sulawesi (Antar Provinsi)";
+                    namaZona = "Regional Sulawesi";
+                }
+
+                // Tambahan biaya khusus jika tipe barang Elektronik (asuransi/packing kayu)
+                if (tipeTerpilih.equals("Elektronik")) {
+                    hargaDasarAgen += 10000;
                 }
 
                 int hargaPerKg = (int) (hargaDasarAgen * multiplierZona);
@@ -333,6 +371,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
                 String strTotal = formatRupiah.format(totalOngkir);
 
                 String hasil = "📍 Tujuan: " + tujuan.toUpperCase() + " (" + namaZona + ")\n" +
+                        "🏷️ Tipe Barang: " + tipeTerpilih + "\n" +
                         "📦 Berat: " + berat + " Kg\n" +
                         "💸 Tarif /Kg: Rp " + strHargaKg + "\n" +
                         "----------------------------------------\n" +

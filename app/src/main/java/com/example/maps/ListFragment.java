@@ -40,8 +40,6 @@ public class ListFragment extends Fragment {
 
     private LocationAdapter adapter;
     private List<LocationModel> masterDataList = new ArrayList<>();
-
-    // KOORDINAT DEFAULT PENGGUNA (Area Gowa)
     private final double CURRENT_LAT = -5.2000;
     private final double CURRENT_LNG = 119.4450;
 
@@ -158,7 +156,6 @@ public class ListFragment extends Fragment {
     private List<LocationModel> getLocalCouriers() {
         List<LocationModel> localData = new ArrayList<>();
 
-        // Pastikan parameter koordinat di sini murni angka (double), bukan diapit tanda kutip
         localData.add(createLoc("JNE Agen Gowa", "Jl. Sultan Hasanuddin No.111, Pandang Pandang, Kec. Somba Opu, Kota Makassar, Sulawesi Selatan 90221", -5.195454876389358, 119.44539597832565));
         localData.add(createLoc("J&T Express Sungguminasa", "Jl. Sultan Hasanuddin No.31, Pandang Pandang, Kec. Somba Opu, Kabupaten Gowa, Sulawesi Selatan 92111", -5.201523807788087, 119.4462544036001));
         localData.add(createLoc("SPX Pallangga Hub", "Jl. Poros Pallangga No.38-47, Tetebatu, Kec. Pallangga, Kabupaten Gowa, Sulawesi Selatan 92161", -5.217768050211432, 119.44566237713194));
@@ -199,7 +196,8 @@ public class ListFragment extends Fragment {
         LocationModel model = new LocationModel();
         model.setName(name);
         model.setAddress(address);
-        model.setLatitude(String.valueOf(lat)); // Simpan kembali sebagai String jika model memintanya
+
+        model.setLatitude(String.valueOf(lat));
         model.setLongitude(String.valueOf(lng));
         return model;
     }
@@ -237,7 +235,6 @@ public class ListFragment extends Fragment {
 
         Collections.sort(masterDataList, (loc1, loc2) -> {
             try {
-                // Diambil langsung tanpa Double.parseDouble()
                 double d1 = calculateDistance(CURRENT_LAT, CURRENT_LNG, loc1.getLatitude(), loc1.getLongitude());
                 double d2 = calculateDistance(CURRENT_LAT, CURRENT_LNG, loc2.getLatitude(), loc2.getLongitude());
                 return Double.compare(d1, d2);
@@ -252,6 +249,13 @@ public class ListFragment extends Fragment {
         if (toggleGroup != null && toggleGroup.getCheckedButtonId() == R.id.btnNearby) {
             for (int i = 0; i < Math.min(5, masterDataList.size()); i++) {
                 displayList.add(masterDataList.get(i));
+            }
+            // FILTER FAVORIT DI SINI
+        } else if (toggleGroup != null && toggleGroup.getCheckedButtonId() == R.id.btnFavorite) {
+            for (LocationModel loc : masterDataList) {
+                if (dbHelper.isFavorite(loc.getName() != null ? loc.getName() : "")) {
+                    displayList.add(loc);
+                }
             }
         } else {
             displayList.addAll(masterDataList);

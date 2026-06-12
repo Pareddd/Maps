@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "NavDB";
-    private static final int DATABASE_VERSION = 7; // Naik ke 7 agar otomatis reset dan memasukkan ulasan Gowa
+    private static final int DATABASE_VERSION = 8;
 
     public final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -25,12 +25,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE locations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, address TEXT, lat REAL, lng REAL)");
         db.execSQL("CREATE TABLE reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, location_name TEXT, rating REAL, comment TEXT)");
+        db.execSQL("CREATE TABLE favorites (location_name TEXT PRIMARY KEY)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS locations");
         db.execSQL("DROP TABLE IF EXISTS reviews");
+        db.execSQL("DROP TABLE IF EXISTS favorites");
         onCreate(db);
     }
 
@@ -67,7 +69,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return list;
     }
 
-    // --- FUNGSI RATING & KOMENTAR ---
+    public boolean isFavorite(String locationName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM favorites WHERE location_name = ?", new String[]{locationName});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public void toggleFavorite(String locationName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        if (isFavorite(locationName)) {
+            db.delete("favorites", "location_name = ?", new String[]{locationName});
+        } else {
+            ContentValues values = new ContentValues();
+            values.put("location_name", locationName);
+            db.insert("favorites", null, values);
+        }
+        db.close();
+    }
+
     public void addReview(String locationName, float rating, String comment) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -121,9 +142,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return list;
     }
 
-    // =========================================================
-    // SUNTIKAN DATA DUMMY UNTUK SEMUA LOKASI
-    // =========================================================
     public void insertDummyReviewsIfEmpty() {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT count(*) FROM reviews", null);
@@ -132,7 +150,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
 
         if (count == 0) {
-            // --- J&T EXPRESS ---
             addReview("J&T Cargo Perintis", 4.5f, "Mantap, paket berat aman jaya di sini.");
             addReview("J&T Cargo Perintis", 5.0f, "Sering pakai untuk kirim motor, adminnya solutif.");
             addReview("J&T Cargo Perintis", 3.0f, "Harganya lumayan, tapi sampainya sesuai estimasi.");
@@ -183,7 +200,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             addReview("J&T Express Drop Point VIP", 5.0f, "Pelayanan sesuai namanya, VIP.");
             addReview("J&T Express Drop Point VIP", 4.5f, "Amanah, barang pecah belah dikasih bubble wrap tebal.");
 
-            // --- JNE EXPRESS ---
             addReview("JNE Tamalanrea", 5.0f, "Selalu andalan kalau mau kirim dokumen penting.");
             addReview("JNE Tamalanrea", 4.0f, "Buka sampai malam, aman buat yang sibuk kerja.");
             addReview("JNE Tamalanrea", 4.5f, "Packing kayunya juara, sangat rapi.");
@@ -223,7 +239,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             addReview("JNE Rappokalling", 2.0f, "Lama proses sortirnya.");
             addReview("JNE Rappokalling", 4.0f, "Bagus untuk kiriman reguler.");
 
-            // --- SICEPAT & SPX EXPRESS ---
             addReview("SiCepat Express Makassar", 4.0f, "Sesuai namanya, memang si cepat.");
             addReview("SiCepat Express Makassar", 5.0f, "Sering promo gratis ongkir di e-commerce.");
             addReview("SiCepat Express Makassar", 1.0f, "Adminnya jutek, disuruh cek resi sendiri.");
@@ -244,7 +259,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             addReview("SPX Express Wajo HUB", 4.5f, "Hubungannya langsung ke pelabuhan, cepat.");
             addReview("SPX Express Wajo HUB", 4.0f, "Kurirnya gesit tawwa.");
 
-            // --- LOKASI BARU GOWA ---
             addReview("JNE Agen Gowa", 5.0f, "Lokasinya gampang dicari, pas di pinggir jalan Sultan Hasanuddin.");
             addReview("JNE Agen Gowa", 4.5f, "Pelayanan cepat, adminnya ramah banget.");
 

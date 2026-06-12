@@ -38,8 +38,6 @@ public class MapFragment extends Fragment {
 
     private View cardRouteInfo;
     private TextView tvRouteInfo;
-
-    // Titik pusat disinkronkan dengan koordinat Gowa di ListFragment
     private final double DEFAULT_LAT = -5.2000;
     private final double DEFAULT_LNG = 119.4450;
 
@@ -71,7 +69,6 @@ public class MapFragment extends Fragment {
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
 
-        // Set kamera awal peta ke titik Gowa
         GeoPoint defaultPoint = new GeoPoint(DEFAULT_LAT, DEFAULT_LNG);
         mapView.getController().setZoom(14.0);
         mapView.getController().setCenter(defaultPoint);
@@ -98,21 +95,19 @@ public class MapFragment extends Fragment {
                 mapView.getOverlays().add(startMarker);
                 mapView.invalidate();
 
-                // Beri waktu 2 detik agar GPS HP sempat melakukan Lock sebelum menggambar rute
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     GeoPoint myCurrentPoint = null;
                     if (myLocationOverlay != null) {
                         myCurrentPoint = myLocationOverlay.getMyLocation();
                     }
 
-                    // Jika GPS masih belum lock, gunakan koordinat Gowa yang sinkron dengan daftar
                     if (myCurrentPoint == null) {
                         Toast.makeText(getContext(), "GPS sedang mencari... Menggunakan lokasi awal di Gowa.", Toast.LENGTH_SHORT).show();
                         myCurrentPoint = new GeoPoint(DEFAULT_LAT, DEFAULT_LNG);
                     }
 
                     drawRoute(myCurrentPoint, targetLocation);
-                }, 2000); // Durasi delay dinaikkan sedikit agar GPS lebih punya waktu bernapas
+                }, 2000);
             }
         }
 

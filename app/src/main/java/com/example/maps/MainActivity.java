@@ -20,7 +20,6 @@ public class MainActivity extends AppCompatActivity {
         if (isDarkMode) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         } else {
-            // Ejaan yang salah sudah diperbaiki di baris ini
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
 
